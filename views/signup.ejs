@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Inscription</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="auth-form">
+    <h1>Créer un compte</h1>
+
+    <% if (error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+
+    <form method="POST" action="/signup">
+      <input type="text" name="login" placeholder="Login" required>
+      <input type="password" name="password" placeholder="Mot de passe" required>
+      <button type="submit">S'inscrire</button>
+    </form>
+
+    <a href="/">Retour à l'accueil</a>
+  </div>
+</body>
+</html>
