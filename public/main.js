@@ -1,3 +1,36 @@
+// Connexion au flux SSE du serveur
+const source = new EventSource('/events');
+
+source.onmessage = (e) => {
+  const data = JSON.parse(e.data);
+
+  if (data.type === 'ajout') {
+    // Ne pas afficher le post-it si c'est nous qui venons de le créer
+    // (on l'a déjà affiché localement via afficherPostit)
+    const dejaPresent = document.querySelector(`.postit[data-id="${data.id}"]`);
+    if (!dejaPresent) {
+      afficherPostit(data);
+    }
+  }
+
+  if (data.type === 'suppression') {
+    const div = document.querySelector(`.postit[data-id="${data.id}"]`);
+    if (div) div.remove();
+  }
+
+  if (data.type === 'modification') {
+    const div = document.querySelector(`.postit[data-id="${data.id}"]`);
+    if (div) {
+      const paragraphe = div.querySelector('.postit-texte');
+      if (paragraphe) paragraphe.textContent = data.texte;
+    }
+  }
+};
+
+source.onerror = () => {
+  console.log('Connexion SSE perdue, reconnexion automatique...');
+};
+
 // Coordonnées du double-clic, gardées en mémoire pour créer le post-it au bon endroit
 let coordX = 0;
 let coordY = 0;
