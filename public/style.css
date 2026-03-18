@@ -104,4 +104,38 @@ body {
   color: #e00;
 }
 
+/* Popup */
+.popup {
+  position: absolute;
+  width: 220px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 4px 4px 12px rgba(0,0,0,0.2);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.popup.hidden {
+  display: none;
+}
+
+.popup textarea {
+  width: 100%;
+  height: 80px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: none;
+  font-size: 14px;
+  font-family: sans-serif;
+}
+
+.popup-boutons {
+  display: flex;
+  gap: 8px;
+}
 
