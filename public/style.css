@@ -1,0 +1,107 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: sans-serif;
+  overflow: hidden; /* Pas de scrollbar sur la page */
+}
+
+/* Barre du haut */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  z-index: 9999; /* Toujours au-dessus des post-its */
+}
+
+.login-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.login-form input {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.btn {
+  padding: 6px 14px;
+  background: #f5c842;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  color: #333;
+}
+
+.btn-secondary {
+  background: #eee;
+}
+
+/* Zone des post-its */
+.board {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  padding-top: 60px; /* Pour ne pas passer sous la topbar */
+  background: #f0f0f0;
+}
+
+/* Post-it */
+.postit {
+  position: absolute;
+  width: 200px;
+  min-height: 120px;
+  background: #fef08a;
+  border: 1px solid #e0d060;
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.postit-texte {
+  font-size: 14px;
+  color: #333;
+  word-break: break-word;
+}
+
+.postit-meta {
+  font-size: 11px;
+  color: #888;
+}
+
+.supprimer {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #aaa;
+  line-height: 1;
+}
+
+.supprimer:hover {
+  color: #e00;
+}
+
+
