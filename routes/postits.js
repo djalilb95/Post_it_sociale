@@ -53,4 +53,29 @@ router.post('/ajouter', (req, res) => {
   });
 });
 
+router.post('/effacer', (req, res) => {
+  // Vérifie que l'utilisateur est connecté
+  if (!req.session.user) {
+    return res.status(401).json({ erreur: 'Non connecté' });
+  }
+
+  const { id } = req.body;
+
+  // Vérifie que le post-it appartient bien à l'utilisateur connecté
+  const postit = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+
+  if (!postit) {
+    return res.status(404).json({ erreur: 'Post-it introuvable' });
+  }
+
+  if (postit.auteur_id !== req.session.user.id) {
+    return res.status(403).json({ erreur: 'Non autorisé' });
+  }
+
+  // Supprime le post-it
+  db.prepare('DELETE FROM messages WHERE id = ?').run(id);
+
+  res.json({ succes: true });
+});
+
 module.exports = router;

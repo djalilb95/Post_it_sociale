@@ -92,6 +92,53 @@ function afficherPostit(postit) {
   `;
 
   document.querySelector('.board').appendChild(div);
+
+  ecouterBoutonSupprimer(div);
 }
 
+// Écoute les clics sur les boutons supprimer (présents au chargement de la page)
+document.querySelectorAll('.supprimer').forEach(bouton => {
+  bouton.addEventListener('click', (e) => {
+    const id = e.target.dataset.id;
+    supprimerPostit(id);
+  });
+});
+
+// Fonction pour écouter le bouton supprimer d'un post-it qu'on vient de créer en AJAX
+function ecouterBoutonSupprimer(div) {
+  const bouton = div.querySelector('.supprimer');
+  if (bouton) {
+    bouton.addEventListener('click', (e) => {
+      const id = e.target.dataset.id;
+      supprimerPostit(id);
+    });
+  }
+}
+
+async function supprimerPostit(id) {
+  // Demande confirmation avant de supprimer
+  const confirmation = confirm('Voulez-vous vraiment supprimer ce post-it ?');
+  if (!confirmation) return;
+
+  try {
+    const reponse = await fetch('/effacer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+
+    if (!reponse.ok) {
+      const erreur = await reponse.json();
+      alert(erreur.erreur);
+      return;
+    }
+
+    // Retire le post-it du DOM
+    const div = document.querySelector(`.postit[data-id="${id}"]`);
+    if (div) div.remove();
+
+  } catch (err) {
+    alert('Erreur lors de la suppression');
+  }
+}
 
