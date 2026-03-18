@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Post-its</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- Barre du haut : login ou déconnexion -->
+  <div class="topbar">
+    <h1>📌 Post-its</h1>
+
+    <% if (user) { %>
+      <span>Connecté en tant que <strong><%= user.login %></strong></span>
+      <a href="/logout" class="btn">Se déconnecter</a>
+    <% } else { %>
+      <form method="POST" action="/login" class="login-form">
+        <input type="text" name="login" placeholder="Login" required>
+        <input type="password" name="password" placeholder="Mot de passe" required>
+        <button type="submit" class="btn">Se connecter</button>
+        <a href="/signup" class="btn btn-secondary">S'inscrire</a>
+      </form>
+    <% } %>
+  </div>
+
+  <!-- Zone des post-its -->
+  <div class="board">
+    <% postits.forEach(postit => { %>
+      <div class="postit"
+           style="left: <%= postit.x %>px; top: <%= postit.y %>px; z-index: <%= postit.zIndex %>;"
+           data-id="<%= postit.id %>">
+
+        <p class="postit-texte"><%= postit.texte %></p>
+        <p class="postit-meta"><%= postit.auteur %> — <%= new Date(postit.date).toLocaleString('fr-FR') %></p>
+
+        <!-- Bouton supprimer visible uniquement pour l'auteur du post-it -->
+        <% if (user && user.id === postit.auteur_id) { %>
+          <button class="supprimer" data-id="<%= postit.id %>">×</button>
+        <% } %>
+
+      </div>
+    <% }) %>
+  </div>
+
+  <script src="/main.js"></script>
+</body>
+</html>
