@@ -20,4 +20,37 @@ router.get('/', (req, res) => {
   res.render('index', { postits: postitsAvecZIndex });
 });
 
+router.post('/ajouter', (req, res) => {
+  // Vérifie que l'utilisateur est connecté
+  if (!req.session.user) {
+    return res.status(401).json({ erreur: 'Non connecté' });
+  }
+
+  const { texte, x, y } = req.body;
+
+  // Vérifie que le texte n'est pas vide
+  if (!texte || texte.trim() === '') {
+    return res.status(400).json({ erreur: 'Le texte est vide' });
+  }
+
+  const date = new Date().toISOString();
+
+  // Insère le post-it en BDD
+  const resultat = db.prepare(`
+    INSERT INTO messages (texte, date, x, y, auteur_id)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(texte.trim(), date, x, y, req.session.user.id);
+
+  // Renvoie le post-it créé au client
+  res.json({
+    id: resultat.lastInsertRowid,
+    texte: texte.trim(),
+    date,
+    x,
+    y,
+    auteur: req.session.user.login,
+    auteur_id: req.session.user.id
+  });
+});
+
 module.exports = router;
