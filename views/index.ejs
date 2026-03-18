@@ -12,7 +12,7 @@
   <div class="topbar">
     <h1>📌 Post-its</h1>
 
-    <% if (user) { %>
+    <% if (user && user.login !== 'guest') { %>
       <span>Connecté en tant que <strong><%= user.login %></strong></span>
       <a href="/logout" class="btn">Se déconnecter</a>
     <% } else { %>

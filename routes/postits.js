@@ -22,8 +22,8 @@ router.get('/', (req, res) => {
 
 router.post('/ajouter', (req, res) => {
   // Vérifie que l'utilisateur est connecté
-  if (!req.session.user) {
-    return res.status(401).json({ erreur: 'Non connecté' });
+  if (!req.session.user || req.session.user.login === 'guest') {
+    return res.status(401).json({ erreur: 'Vous devez être connecté pour créer un post-it' });
   }
 
   const { texte, x, y } = req.body;
@@ -55,8 +55,8 @@ router.post('/ajouter', (req, res) => {
 
 router.post('/effacer', (req, res) => {
   // Vérifie que l'utilisateur est connecté
-  if (!req.session.user) {
-    return res.status(401).json({ erreur: 'Non connecté' });
+  if (!req.session.user || req.session.user.login === 'guest') {
+    return res.status(401).json({ erreur: 'Vous devez être connecté pour supprimer un post-it' });
   }
 
   const { id } = req.body;
