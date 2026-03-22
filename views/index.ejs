@@ -28,7 +28,7 @@
   <!-- Zone des post-its -->
   <div class="board">
     <% postits.forEach(postit => { %>
-      <div class="postit"
+      <div class="postit <%= (user && user.id === postit.auteur_id) ? 'modifiable' : '' %>"
            style="left: <%= postit.x %>px; top: <%= postit.y %>px; z-index: <%= postit.zIndex %>;"
            data-id="<%= postit.id %>">
 

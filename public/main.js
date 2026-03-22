@@ -175,3 +175,93 @@ async function supprimerPostit(id) {
   }
 }
 
+// Écoute le double-clic sur les post-its présents au chargement
+document.querySelectorAll('.postit.modifiable').forEach(div => {
+  ecouterDoubleClicModification(div);
+});
+
+function ecouterDoubleClicModification(div) {
+  div.addEventListener('dblclick', (e) => {
+    // Empêche le double-clic de se propager au board et de créer un nouveau post-it
+    e.stopPropagation();
+
+    // Si déjà en mode édition on ne fait rien
+    if (div.querySelector('.edit-texte')) return;
+
+    const paragraphe = div.querySelector('.postit-texte');
+    const texteActuel = paragraphe.textContent;
+
+    // Remplace le paragraphe par un textarea avec le texte actuel
+    const textarea = document.createElement('textarea');
+    textarea.classList.add('edit-texte');
+    textarea.value = texteActuel;
+    paragraphe.replaceWith(textarea);
+    textarea.focus();
+
+    // Bouton valider la modification
+    const boutonValider = document.createElement('button');
+    boutonValider.textContent = '✓';
+    boutonValider.classList.add('btn', 'btn-valider-edit');
+    div.appendChild(boutonValider);
+
+    // Valider au clic sur le bouton
+    boutonValider.addEventListener('click', () => {
+      modifierPostit(div, textarea, boutonValider, texteActuel);
+    });
+
+    // Valider avec Entrée, annuler avec Echap
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        modifierPostit(div, textarea, boutonValider, texteActuel);
+      }
+      if (e.key === 'Escape') {
+        annulerModification(div, textarea, boutonValider, texteActuel);
+      }
+    });
+  });
+}
+
+async function modifierPostit(div, textarea, boutonValider, texteOriginal) {
+  const nouveauTexte = textarea.value.trim();
+
+  if (!nouveauTexte) return;
+
+  // Si le texte n'a pas changé on annule juste l'édition
+  if (nouveauTexte === texteOriginal) {
+    annulerModification(div, textarea, boutonValider, texteOriginal);
+    return;
+  }
+
+  try {
+    const reponse = await fetch('/modifier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: div.dataset.id, texte: nouveauTexte })
+    });
+
+    if (!reponse.ok) {
+      const erreur = await reponse.json();
+      alert(erreur.erreur);
+      return;
+    }
+
+    // Remet un paragraphe avec le nouveau texte
+    const paragraphe = document.createElement('p');
+    paragraphe.classList.add('postit-texte');
+    paragraphe.textContent = nouveauTexte;
+    textarea.replaceWith(paragraphe);
+    boutonValider.remove();
+
+  } catch (err) {
+    alert('Erreur lors de la modification');
+  }
+}
+
+function annulerModification(div, textarea, boutonValider, texteOriginal) {
+  const paragraphe = document.createElement('p');
+  paragraphe.classList.add('postit-texte');
+  paragraphe.textContent = texteOriginal;
+  textarea.replaceWith(paragraphe);
+  boutonValider.remove();
+}

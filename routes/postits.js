@@ -125,4 +125,34 @@ router.post('/modifier', (req, res) => {
   res.json({ succes: true, texte: texte.trim() });
 });
 
+router.post('/modifier', (req, res) => {
+  // Vérifie que l'utilisateur est connecté
+  if (!req.session.user) {
+    return res.status(401).json({ erreur: 'Non connecté' });
+  }
+
+  const { id, texte } = req.body;
+
+  if (!texte || texte.trim() === '') {
+    return res.status(400).json({ erreur: 'Le texte est vide' });
+  }
+
+  // Vérifie que le post-it appartient bien à l'utilisateur connecté
+  const postit = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+
+  if (!postit) {
+    return res.status(404).json({ erreur: 'Post-it introuvable' });
+  }
+
+  if (postit.auteur_id !== req.session.user.id) {
+    return res.status(403).json({ erreur: 'Non autorisé' });
+  }
+
+  // Met à jour le texte en BDD
+  db.prepare('UPDATE messages SET texte = ? WHERE id = ?').run(texte.trim(), id);
+
+  res.json({ succes: true, texte: texte.trim() });
+});
+
 module.exports = router;
+
