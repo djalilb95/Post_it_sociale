@@ -17,6 +17,11 @@ router.post('/signup', async (req, res) => {
     return res.render('signup', { error: 'Tous les champs sont obligatoires.' });
   }
 
+  // Empêche de créer un compte avec le login "guest" ou "admin"
+  if (login === 'guest' || login === 'admin') {
+    return res.render('signup', { error: 'Ce login est réservé.' });
+  }
+
   // Vérifie que le login n'est pas déjà pris
   const existing = db.prepare('SELECT id FROM users WHERE login = ?').get(login);
   if (existing) {
@@ -25,7 +30,7 @@ router.post('/signup', async (req, res) => {
 
   // Hash le mot de passe puis insère l'utilisateur
   const hash = await bcrypt.hash(password, 10);
-  db.prepare('INSERT INTO users (login, password) VALUES (?, ?)').run(login, hash);
+  db.prepare('INSERT INTO users (login, password, droit_creation) VALUES (?, ?, 1)').run(login, hash);
 
   res.redirect('/');
 });
@@ -42,7 +47,16 @@ router.post('/login', async (req, res) => {
   }
 
   // Stocke l'utilisateur dans la session
-  req.session.user = { id: user.id, login: user.login };
+  req.session.user = {
+    id: user.id,
+    login: user.login,
+    droits: {
+      creation: !!user.droit_creation,
+      modification: !!user.droit_modification,
+      effacement: !!user.droit_effacement,
+      administration: !!user.droit_administration
+    }
+  };
   res.redirect('/');
 });
 
