@@ -5,7 +5,6 @@
   <title>Post-its</title>
   <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
 
   <!-- Barre du haut : login ou déconnexion -->
@@ -14,6 +13,9 @@
 
     <% if (user && user.login !== 'guest') { %>
       <span>Connecté en tant que <strong><%= user.login %></strong></span>
+      <% if (user.droits && user.droits.administration) { %>
+        <a href="/admin" class="btn btn-secondary">⚙️ Admin</a>
+      <% } %>
       <a href="/logout" class="btn">Se déconnecter</a>
     <% } else { %>
       <form method="POST" action="/login" class="login-form">
@@ -31,21 +33,15 @@
       <div class="postit <%= (user && user.id === postit.auteur_id) ? 'modifiable' : '' %>"
            style="left: <%= postit.x %>px; top: <%= postit.y %>px; z-index: <%= postit.zIndex %>;"
            data-id="<%= postit.id %>">
-
         <p class="postit-texte"><%= postit.texte %></p>
         <p class="postit-meta"><%= postit.auteur %> — <%= new Date(postit.date).toLocaleString('fr-FR') %></p>
-
-        <!-- Bouton supprimer visible uniquement pour l'auteur du post-it -->
         <% if (user && user.id === postit.auteur_id) { %>
           <button class="supprimer" data-id="<%= postit.id %>">×</button>
         <% } %>
-
       </div>
     <% }) %>
   </div>
 
-  
-  
   <!-- Popup d'ajout de post-it -->
   <div id="popup" class="popup hidden">
     <textarea id="popup-texte" placeholder="Votre message..."></textarea>
@@ -56,6 +52,5 @@
   </div>
 
   <script src="/main.js"></script>
-
 </body>
 </html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Administration</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="topbar">
+    <h1>⚙️ Administration</h1>
+    <a href="/" class="btn btn-secondary">Retour</a>
+  </div>
+
+  <div class="admin-container">
+    <h2>Gestion des droits utilisateurs</h2>
+
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Création</th>
+          <th>Modification</th>
+          <th>Effacement</th>
+          <th>Administration</th>
+          <th>Sauvegarder</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(user => { %>
+          <tr>
+            <form method="POST" action="/admin/droits">
+              <input type="hidden" name="userId" value="<%= user.id %>">
+              <td><strong><%= user.login %></strong></td>
+              <td><input type="checkbox" name="droit_creation" <%= user.droit_creation ? 'checked' : '' %>></td>
+              <td><input type="checkbox" name="droit_modification" <%= user.droit_modification ? 'checked' : '' %>></td>
+              <td><input type="checkbox" name="droit_effacement" <%= user.droit_effacement ? 'checked' : '' %>></td>
+              <td><input type="checkbox" name="droit_administration" <%= user.droit_administration ? 'checked' : '' %>></td>
+              <td><button type="submit" class="btn">Sauvegarder</button></td>
+            </form>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

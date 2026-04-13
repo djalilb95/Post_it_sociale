@@ -162,3 +162,43 @@ body {
   cursor: pointer;
 }
 
+.admin-container {
+  padding: 80px 40px 40px;
+}
+
+.admin-container h2 {
+  margin-bottom: 24px;
+  font-size: 20px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.admin-table th {
+  background: #f5c842;
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.admin-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
