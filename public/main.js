@@ -25,6 +25,19 @@ source.onmessage = (e) => {
       if (paragraphe) paragraphe.textContent = data.texte;
     }
   }
+
+  if (data.type === 'deplacement') {
+    const div = document.querySelector(`.postit[data-id="${data.id}"]`);
+    if (div && div !== postitEnCours) {
+      div.style.left = data.x + 'px';
+      div.style.top = data.y + 'px';
+
+      // Met le post-it déplacé au premier plan chez les autres navigateurs
+      const tousLesPostits = document.querySelectorAll('.postit');
+      const maxZIndex = Math.max(...[...tousLesPostits].map(p => parseInt(p.style.zIndex) || 0));
+      div.style.zIndex = maxZIndex + 1;
+    }
+  }
 };
 
 source.onerror = () => {
@@ -107,12 +120,11 @@ async function ajouterPostit() {
 }
 
 function afficherPostit(postit) {
-  // Calcule le z-index le plus élevé parmi les post-its existants
   const tousLesPostits = document.querySelectorAll('.postit');
-  const maxZIndex = tousLesPostits.length;
+  const maxZIndex = Math.max(...[...tousLesPostits].map(p => parseInt(p.style.zIndex) || 0));
 
   const div = document.createElement('div');
-  div.classList.add('postit');
+  div.classList.add('postit', 'modifiable'); // modifiable car c'est forcément notre post-it
   div.dataset.id = postit.id;
   div.style.left = postit.x + 'px';
   div.style.top = postit.y + 'px';
@@ -125,8 +137,9 @@ function afficherPostit(postit) {
   `;
 
   document.querySelector('.board').appendChild(div);
-
   ecouterBoutonSupprimer(div);
+  ecouterDoubleClicModification(div);
+  ecouterDrag(div); 
 }
 
 // Écoute les clics sur les boutons supprimer (présents au chargement de la page)
@@ -265,3 +278,76 @@ function annulerModification(div, textarea, boutonValider, texteOriginal) {
   textarea.replaceWith(paragraphe);
   boutonValider.remove();
 }
+
+// Drag and drop — état global
+let postitEnCours = null;  // Le post-it qu'on est en train de déplacer
+let offsetX = 0;           // Décalage entre le curseur et le coin du post-it
+let offsetY = 0;
+
+// Branche le drag sur les post-its déplaçables présents au chargement
+document.querySelectorAll('.postit.modifiable').forEach(div => {
+  ecouterDrag(div);
+});
+
+function ecouterDrag(div) {
+  div.addEventListener('mousedown', (e) => {
+    // Ignore le clic sur le bouton supprimer ou en mode édition
+    if (e.target.classList.contains('supprimer')) return;
+    if (div.querySelector('.edit-texte')) return;
+
+    postitEnCours = div;
+
+    // Calcule le décalage entre le curseur et le coin haut-gauche du post-it
+    offsetX = e.clientX - div.getBoundingClientRect().left;
+    offsetY = e.clientY - div.getBoundingClientRect().top;
+
+    // Met le post-it au premier plan
+    const tousLesPostits = document.querySelectorAll('.postit');
+    const maxZIndex = Math.max(...[...tousLesPostits].map(p => parseInt(p.style.zIndex) || 0));
+    div.style.zIndex = maxZIndex + 1;
+
+    e.preventDefault(); // Empêche la sélection de texte pendant le drag
+  });
+}
+
+// Déplacement de la souris sur toute la page
+document.addEventListener('mousemove', (e) => {
+  if (!postitEnCours) return;
+
+  const board = document.querySelector('.board');
+  const boardRect = board.getBoundingClientRect();
+
+  // Calcule la nouvelle position relative au board
+  let newX = e.clientX - boardRect.left - offsetX;
+  let newY = e.clientY - boardRect.top - offsetY;
+
+  // Empêche le post-it de sortir du board
+  newX = Math.max(0, Math.min(newX, boardRect.width - postitEnCours.offsetWidth));
+  newY = Math.max(0, Math.min(newY, boardRect.height - postitEnCours.offsetHeight));
+
+  postitEnCours.style.left = newX + 'px';
+  postitEnCours.style.top = newY + 'px';
+});
+
+// Relâchement de la souris — on envoie la nouvelle position au serveur
+document.addEventListener('mouseup', async (e) => {
+  if (!postitEnCours) return;
+
+  const id = postitEnCours.dataset.id;
+  const x = parseFloat(postitEnCours.style.left);
+  const y = parseFloat(postitEnCours.style.top);
+
+  // Remet la variable à null avant le fetch pour éviter les doublons
+  const divDeplacee = postitEnCours;
+  postitEnCours = null;
+
+  try {
+    await fetch('/deplacer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, x, y })
+    });
+  } catch (err) {
+    console.error('Erreur lors du déplacement', err);
+  }
+});
