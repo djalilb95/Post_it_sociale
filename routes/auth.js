@@ -3,50 +3,43 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const db = require('../database');
 
-// Affiche le formulaire d'inscription
 router.get('/signup', (req, res) => {
   res.render('signup', { error: null });
 });
 
-// Traite l'inscription
 router.post('/signup', async (req, res) => {
   const { login, password } = req.body;
 
-  // Vérifie que les champs ne sont pas vides
   if (!login || !password) {
     return res.render('signup', { error: 'Tous les champs sont obligatoires.' });
   }
 
-  // Empêche de créer un compte avec le login "guest" ou "admin"
   if (login === 'guest' || login === 'admin') {
     return res.render('signup', { error: 'Ce login est réservé.' });
   }
 
-  // Vérifie que le login n'est pas déjà pris
-  const existing = db.prepare('SELECT id FROM users WHERE login = ?').get(login);
+  const existing = await db.get2('SELECT id FROM users WHERE login = ?', [login]);
   if (existing) {
     return res.render('signup', { error: 'Ce login est déjà pris.' });
   }
 
-  // Hash le mot de passe puis insère l'utilisateur
   const hash = await bcrypt.hash(password, 10);
-  db.prepare('INSERT INTO users (login, password, droit_creation) VALUES (?, ?, 1)').run(login, hash);
+  await db.run2(
+    'INSERT INTO users (login, password, droit_creation) VALUES (?, ?, 1)',
+    [login, hash]
+  );
 
   res.redirect('/');
 });
 
-// Traite la connexion
 router.post('/login', async (req, res) => {
   const { login, password } = req.body;
+  const user = await db.get2('SELECT * FROM users WHERE login = ?', [login]);
 
-  const user = db.prepare('SELECT * FROM users WHERE login = ?').get(login);
-
-  // Vérifie que l'utilisateur existe et que le mot de passe est correct
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.redirect('/');
   }
 
-  // Stocke l'utilisateur dans la session
   req.session.user = {
     id: user.id,
     login: user.login,
@@ -57,10 +50,10 @@ router.post('/login', async (req, res) => {
       administration: !!user.droit_administration
     }
   };
+
   res.redirect('/');
 });
 
-// Déconnexion
 router.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/');

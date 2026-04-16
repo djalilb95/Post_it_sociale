@@ -22,14 +22,13 @@ function diffuser(type, donnees) {
   clients.forEach(client => client.write(message));
 }
 
-// Route principale — unique, avec les préférences
-router.get('/', (req, res) => {
-  const postits = db.prepare(`
+router.get('/', async (req, res) => {
+  const postits = await db.all2(`
     SELECT messages.*, users.login as auteur
     FROM messages
     JOIN users ON messages.auteur_id = users.id
     ORDER BY messages.date ASC
-  `).all();
+  `);
 
   const postitsAvecZIndex = postits.map((p, index) => ({
     ...p,
@@ -38,8 +37,10 @@ router.get('/', (req, res) => {
 
   let preferences = { couleurFond: '#f0f0f0', couleurPostit: '#fef08a' };
   if (req.session.user) {
-    const userDoc = db.prepare('SELECT couleur_fond, couleur_postit FROM users WHERE id = ?')
-      .get(req.session.user.id);
+    const userDoc = await db.get2(
+      'SELECT couleur_fond, couleur_postit FROM users WHERE id = ?',
+      [req.session.user.id]
+    );
     if (userDoc) {
       preferences = {
         couleurFond: userDoc.couleur_fond || '#f0f0f0',
@@ -51,7 +52,7 @@ router.get('/', (req, res) => {
   res.render('index', { postits: postitsAvecZIndex, preferences });
 });
 
-router.post('/ajouter', (req, res) => {
+router.post('/ajouter', async (req, res) => {
   if (!req.session.user?.droits?.creation) {
     return res.status(401).json({ erreur: 'Vous n\'avez pas le droit de créer un post-it' });
   }
@@ -62,13 +63,13 @@ router.post('/ajouter', (req, res) => {
   }
 
   const date = new Date().toISOString();
-  const resultat = db.prepare(`
-    INSERT INTO messages (texte, date, x, y, auteur_id)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(texte.trim(), date, x, y, req.session.user.id);
+  const resultat = await db.run2(
+    'INSERT INTO messages (texte, date, x, y, auteur_id) VALUES (?, ?, ?, ?, ?)',
+    [texte.trim(), date, x, y, req.session.user.id]
+  );
 
   const nouveauPostit = {
-    id: resultat.lastInsertRowid,
+    id: resultat.lastID,
     texte: texte.trim(),
     date,
     x,
@@ -81,13 +82,13 @@ router.post('/ajouter', (req, res) => {
   res.json(nouveauPostit);
 });
 
-router.post('/effacer', (req, res) => {
+router.post('/effacer', async (req, res) => {
   if (!req.session.user?.droits?.effacement) {
     return res.status(401).json({ erreur: 'Vous n\'avez pas le droit de supprimer un post-it' });
   }
 
   const { id } = req.body;
-  const postit = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+  const postit = await db.get2('SELECT * FROM messages WHERE id = ?', [id]);
 
   if (!postit) return res.status(404).json({ erreur: 'Post-it introuvable' });
 
@@ -95,12 +96,12 @@ router.post('/effacer', (req, res) => {
     return res.status(403).json({ erreur: 'Non autorisé' });
   }
 
-  db.prepare('DELETE FROM messages WHERE id = ?').run(id);
+  await db.run2('DELETE FROM messages WHERE id = ?', [id]);
   diffuser('suppression', { id });
   res.json({ succes: true });
 });
 
-router.post('/modifier', (req, res) => {
+router.post('/modifier', async (req, res) => {
   if (!req.session.user?.droits?.modification) {
     return res.status(401).json({ erreur: 'Vous n\'avez pas le droit de modifier un post-it' });
   }
@@ -108,26 +109,25 @@ router.post('/modifier', (req, res) => {
   const { id, texte } = req.body;
   if (!texte || texte.trim() === '') return res.status(400).json({ erreur: 'Le texte est vide' });
 
-  const postit = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
-
+  const postit = await db.get2('SELECT * FROM messages WHERE id = ?', [id]);
   if (!postit) return res.status(404).json({ erreur: 'Post-it introuvable' });
 
   if (postit.auteur_id !== req.session.user.id && !req.session.user.droits.administration) {
     return res.status(403).json({ erreur: 'Non autorisé' });
   }
 
-  db.prepare('UPDATE messages SET texte = ? WHERE id = ?').run(texte.trim(), id);
+  await db.run2('UPDATE messages SET texte = ? WHERE id = ?', [texte.trim(), id]);
   diffuser('modification', { id, texte: texte.trim() });
   res.json({ succes: true, texte: texte.trim() });
 });
 
-router.post('/deplacer', (req, res) => {
+router.post('/deplacer', async (req, res) => {
   if (!req.session.user?.droits?.modification) {
     return res.status(401).json({ erreur: 'Non autorisé' });
   }
 
   const { id, x, y } = req.body;
-  const postit = db.prepare('SELECT * FROM messages WHERE id = ?').get(id);
+  const postit = await db.get2('SELECT * FROM messages WHERE id = ?', [id]);
 
   if (!postit) return res.status(404).json({ erreur: 'Post-it introuvable' });
 
@@ -135,7 +135,7 @@ router.post('/deplacer', (req, res) => {
     return res.status(403).json({ erreur: 'Non autorisé' });
   }
 
-  db.prepare('UPDATE messages SET x = ?, y = ? WHERE id = ?').run(x, y, id);
+  await db.run2('UPDATE messages SET x = ?, y = ? WHERE id = ?', [x, y, id]);
   diffuser('deplacement', { id, x, y });
   res.json({ succes: true });
 });
