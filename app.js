@@ -36,6 +36,7 @@ app.use(async (req, res, next) => {
 app.use('/', require('./routes/postits'));
 app.use('/', require('./routes/auth'));
 app.use('/', require('./routes/admin'));
+app.use('/', require('./routes/settings'));
 
 // Charge le certificat et la clé privée
 const options = {

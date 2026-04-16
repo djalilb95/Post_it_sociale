@@ -351,3 +351,107 @@ document.addEventListener('mouseup', async (e) => {
     console.error('Erreur lors du déplacement', err);
   }
 });
+
+function toggleReglages() {
+  const panel = document.getElementById('panel-reglages');
+  const overlay = document.getElementById('overlay-reglages');
+  panel.classList.toggle('hidden');
+  overlay.classList.toggle('hidden');
+}
+
+async function changerLogin() {
+  const nouveauLogin = document.getElementById('nouveau-login').value.trim();
+  const feedback = document.getElementById('feedback-login');
+
+  try {
+    const reponse = await fetch('/settings/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nouveauLogin })
+    });
+
+    const data = await reponse.json();
+
+    if (!reponse.ok) {
+      feedback.textContent = data.erreur;
+      feedback.className = 'feedback erreur';
+      return;
+    }
+
+    // Met à jour le login affiché dans la topbar
+    document.getElementById('span-login').textContent = data.nouveauLogin;
+    feedback.textContent = 'Login modifié avec succès !';
+    feedback.className = 'feedback succes';
+    document.getElementById('nouveau-login').value = '';
+
+  } catch (err) {
+    feedback.textContent = 'Erreur lors de la modification';
+    feedback.className = 'feedback erreur';
+  }
+}
+
+async function changerPassword() {
+  const ancienPassword = document.getElementById('ancien-password').value;
+  const nouveauPassword = document.getElementById('nouveau-password').value;
+  const feedback = document.getElementById('feedback-password');
+
+  try {
+    const reponse = await fetch('/settings/password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ancienPassword, nouveauPassword })
+    });
+
+    const data = await reponse.json();
+
+    if (!reponse.ok) {
+      feedback.textContent = data.erreur;
+      feedback.className = 'feedback erreur';
+      return;
+    }
+
+    feedback.textContent = 'Mot de passe modifié avec succès !';
+    feedback.className = 'feedback succes';
+    document.getElementById('ancien-password').value = '';
+    document.getElementById('nouveau-password').value = '';
+
+  } catch (err) {
+    feedback.textContent = 'Erreur lors de la modification';
+    feedback.className = 'feedback erreur';
+  }
+}
+
+async function sauvegarderCouleurs() {
+  const couleurFond = document.getElementById('couleur-fond').value;
+  const couleurPostit = document.getElementById('couleur-postit').value;
+  const feedback = document.getElementById('feedback-couleurs');
+
+  try {
+    const reponse = await fetch('/settings/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ couleurFond, couleurPostit })
+    });
+
+    const data = await reponse.json();
+
+    if (!reponse.ok) {
+      feedback.textContent = data.erreur;
+      feedback.className = 'feedback erreur';
+      return;
+    }
+
+    // Applique les couleurs immédiatement sans recharger
+    document.querySelector('.board').style.background = couleurFond;
+    document.querySelectorAll('.postit').forEach(p => {
+      p.style.background = couleurPostit;
+    });
+
+    feedback.textContent = 'Couleurs sauvegardées !';
+    feedback.className = 'feedback succes';
+
+  } catch (err) {
+    feedback.textContent = 'Erreur lors de la sauvegarde';
+    feedback.className = 'feedback erreur';
+  }
+}

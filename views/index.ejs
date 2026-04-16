@@ -4,18 +4,27 @@
   <meta charset="UTF-8">
   <title>Post-its</title>
   <link rel="stylesheet" href="/style.css">
+  <style>
+    .board {
+      background: <%= preferences?.couleurFond || "#f4f4f4" %>;
+    }
+    .postit {
+      background: <%= preferences?.couleurPostit || "#ffeb3b" %>;
+      border-color: <%= preferences?.couleurPostit || "#ffeb3b" %>;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Barre du haut : login ou déconnexion -->
   <div class="topbar">
     <h1>📌 Post-its</h1>
 
     <% if (user && user.login !== 'guest') { %>
-      <span>Connecté en tant que <strong><%= user.login %></strong></span>
+      <span>Connecté en tant que <strong id="span-login"><%= user.login %></strong></span>
       <% if (user.droits && user.droits.administration) { %>
         <a href="/admin" class="btn btn-secondary">⚙️ Admin</a>
       <% } %>
+      <button class="btn btn-secondary" onclick="toggleReglages()">🎨 Réglages</button>
       <a href="/logout" class="btn">Se déconnecter</a>
     <% } else { %>
       <form method="POST" action="/login" class="login-form">
@@ -27,7 +36,41 @@
     <% } %>
   </div>
 
-  <!-- Zone des post-its -->
+  <!-- Panel réglages -->
+  <div id="panel-reglages" class="panel-reglages hidden">
+    <h2>Réglages</h2>
+
+    <div class="panel-section">
+      <h3>Changer le login</h3>
+      <input type="text" id="nouveau-login" placeholder="Nouveau login">
+      <button class="btn" onclick="changerLogin()">Sauvegarder</button>
+      <p class="feedback" id="feedback-login"></p>
+    </div>
+
+    <div class="panel-section">
+      <h3>Changer le mot de passe</h3>
+      <input type="password" id="ancien-password" placeholder="Ancien mot de passe">
+      <input type="password" id="nouveau-password" placeholder="Nouveau mot de passe">
+      <button class="btn" onclick="changerPassword()">Sauvegarder</button>
+      <p class="feedback" id="feedback-password"></p>
+    </div>
+
+    <div class="panel-section">
+      <h3>Apparence</h3>
+      <label>Couleur du fond</label>
+      <input type="color" id="couleur-fond" value="<%= preferences.couleurFond %>">
+      <label>Couleur des post-its</label>
+      <input type="color" id="couleur-postit" value="<%= preferences.couleurPostit %>">
+      <button class="btn" onclick="sauvegarderCouleurs()">Sauvegarder les couleurs</button>
+      <p class="feedback" id="feedback-couleurs"></p>
+    </div>
+
+    <button class="btn btn-secondary" style="width:100%;margin-top:8px" onclick="toggleReglages()">Fermer</button>
+  </div>
+
+  <!-- Overlay pour fermer le panel en cliquant à côté -->
+  <div id="overlay-reglages" class="overlay hidden" onclick="toggleReglages()"></div>
+
   <div class="board">
     <% postits.forEach(postit => { %>
       <div class="postit <%= (user && user.id === postit.auteur_id) ? 'modifiable' : '' %>"
@@ -42,7 +85,6 @@
     <% }) %>
   </div>
 
-  <!-- Popup d'ajout de post-it -->
   <div id="popup" class="popup hidden">
     <textarea id="popup-texte" placeholder="Votre message..."></textarea>
     <div class="popup-boutons">

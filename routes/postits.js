@@ -22,6 +22,7 @@ function diffuser(type, donnees) {
   clients.forEach(client => client.write(message));
 }
 
+// Route principale — unique, avec les préférences
 router.get('/', (req, res) => {
   const postits = db.prepare(`
     SELECT messages.*, users.login as auteur
@@ -35,7 +36,19 @@ router.get('/', (req, res) => {
     zIndex: index + 1
   }));
 
-  res.render('index', { postits: postitsAvecZIndex });
+  let preferences = { couleurFond: '#f0f0f0', couleurPostit: '#fef08a' };
+  if (req.session.user) {
+    const userDoc = db.prepare('SELECT couleur_fond, couleur_postit FROM users WHERE id = ?')
+      .get(req.session.user.id);
+    if (userDoc) {
+      preferences = {
+        couleurFond: userDoc.couleur_fond || '#f0f0f0',
+        couleurPostit: userDoc.couleur_postit || '#fef08a'
+      };
+    }
+  }
+
+  res.render('index', { postits: postitsAvecZIndex, preferences });
 });
 
 router.post('/ajouter', (req, res) => {
@@ -78,7 +91,6 @@ router.post('/effacer', (req, res) => {
 
   if (!postit) return res.status(404).json({ erreur: 'Post-it introuvable' });
 
-  // Les admins peuvent supprimer n'importe quel post-it
   if (postit.auteur_id !== req.session.user.id && !req.session.user.droits.administration) {
     return res.status(403).json({ erreur: 'Non autorisé' });
   }
@@ -100,7 +112,6 @@ router.post('/modifier', (req, res) => {
 
   if (!postit) return res.status(404).json({ erreur: 'Post-it introuvable' });
 
-  // Les admins peuvent modifier n'importe quel post-it
   if (postit.auteur_id !== req.session.user.id && !req.session.user.droits.administration) {
     return res.status(403).json({ erreur: 'Non autorisé' });
   }
@@ -120,16 +131,12 @@ router.post('/deplacer', (req, res) => {
 
   if (!postit) return res.status(404).json({ erreur: 'Post-it introuvable' });
 
-  // Les admins peuvent déplacer n'importe quel post-it
   if (postit.auteur_id !== req.session.user.id && !req.session.user.droits.administration) {
     return res.status(403).json({ erreur: 'Non autorisé' });
   }
 
   db.prepare('UPDATE messages SET x = ?, y = ? WHERE id = ?').run(x, y, id);
-
-  // Diffuse la nouvelle position à tous les navigateurs
   diffuser('deplacement', { id, x, y });
-
   res.json({ succes: true });
 });
 

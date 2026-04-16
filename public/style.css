@@ -202,3 +202,86 @@ body {
   height: 16px;
   cursor: pointer;
 }
+
+/* Panel réglages */
+.panel-reglages {
+  position: fixed;
+  top: 60px;
+  right: 0;
+  width: 300px;
+  height: calc(100vh - 60px);
+  background: white;
+  border-left: 1px solid #ddd;
+  padding: 24px;
+  z-index: 10001;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: -4px 0 12px rgba(0,0,0,0.1);
+}
+
+.panel-reglages.hidden {
+  display: none;
+}
+
+.panel-reglages h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.panel-section h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+.panel-section input[type="text"],
+.panel-section input[type="password"] {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.panel-section input[type="color"] {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.panel-section label {
+  font-size: 13px;
+  color: #777;
+}
+
+.feedback {
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.feedback.succes { color: green; }
+.feedback.erreur { color: red; }
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.2);
+  z-index: 10000;
+}
+
+.overlay.hidden {
+  display: none;
+}
