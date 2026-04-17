@@ -1,4 +1,11 @@
 {
+  "name": "postit-social",
+  "version": "1.0.0",
+  "engines": {
+    "node": "20.x"
+  },
+
+
   "dependencies": {
     "@libsql/client": "^0.17.2",
     "bcrypt": "^6.0.0",
