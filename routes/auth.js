@@ -18,20 +18,23 @@ router.post('/signup', async (req, res) => {
     return res.render('signup', { error: 'Ce login est réservé.' });
   }
 
-  const existing = db.prepare('SELECT id FROM users WHERE login = ?').get(login);
+  const existing = await db.get2('SELECT id FROM users WHERE login = ?', [login]);
   if (existing) {
     return res.render('signup', { error: 'Ce login est déjà pris.' });
   }
 
   const hash = await bcrypt.hash(password, 10);
-  db.prepare('INSERT INTO users (login, password, droit_creation) VALUES (?, ?, 1)').run(login, hash);
+  await db.run2(
+    'INSERT INTO users (login, password, droit_creation) VALUES (?, ?, 1)',
+    [login, hash]
+  );
 
   res.redirect('/');
 });
 
 router.post('/login', async (req, res) => {
   const { login, password } = req.body;
-  const user = db.prepare('SELECT * FROM users WHERE login = ?').get(login);
+  const user = await db.get2('SELECT * FROM users WHERE login = ?', [login]);
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.redirect('/');

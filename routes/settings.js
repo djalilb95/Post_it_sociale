@@ -21,19 +21,19 @@ router.post('/settings/login', verifierConnecte, async (req, res) => {
     return res.status(400).json({ erreur: 'Ce login est réservé' });
   }
 
-  const existing = db.prepare('SELECT id FROM users WHERE login = ?').get(nouveauLogin);
+  const existing = await db.get2('SELECT id FROM users WHERE login = ?', [nouveauLogin]);
   if (existing) {
     return res.status(400).json({ erreur: 'Ce login est déjà pris' });
   }
 
-  db.prepare('UPDATE users SET login = ? WHERE id = ?').run(nouveauLogin, req.session.user.id);
+  await db.run2('UPDATE users SET login = ? WHERE id = ?', [nouveauLogin, req.session.user.id]);
   req.session.user.login = nouveauLogin;
   res.json({ succes: true, nouveauLogin });
 });
 
 router.post('/settings/password', verifierConnecte, async (req, res) => {
   const { ancienPassword, nouveauPassword } = req.body;
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.user.id);
+  const user = await db.get2('SELECT * FROM users WHERE id = ?', [req.session.user.id]);
 
   if (!user) return res.status(404).json({ erreur: 'Utilisateur introuvable' });
 
@@ -45,15 +45,17 @@ router.post('/settings/password', verifierConnecte, async (req, res) => {
   }
 
   const hash = await bcrypt.hash(nouveauPassword, 10);
-  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash, req.session.user.id);
+  await db.run2('UPDATE users SET password = ? WHERE id = ?', [hash, req.session.user.id]);
   res.json({ succes: true });
 });
 
-router.post('/settings/preferences', verifierConnecte, (req, res) => {
+router.post('/settings/preferences', verifierConnecte, async (req, res) => {
   const { couleurFond, couleurPostit } = req.body;
 
-  db.prepare('UPDATE users SET couleur_fond = ?, couleur_postit = ? WHERE id = ?')
-    .run(couleurFond, couleurPostit, req.session.user.id);
+  await db.run2(
+    'UPDATE users SET couleur_fond = ?, couleur_postit = ? WHERE id = ?',
+    [couleurFond, couleurPostit, req.session.user.id]
+  );
 
   req.session.user.preferences = { couleurFond, couleurPostit };
   res.json({ succes: true });
