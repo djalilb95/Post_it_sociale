@@ -65,4 +65,17 @@ function init() {
 
 init();
 
+// À ajouter à la fin de la fonction init() dans database.js
+const bcrypt = require('bcrypt'); // N'oublie pas l'import en haut du fichier
+
+const admin = db.prepare('SELECT id FROM users WHERE login = ?').get('admin');
+if (!admin) {
+    const hash = bcrypt.hashSync('admin', 10); // Mot de passe par défaut : admin
+    db.prepare(`
+        INSERT INTO users (login, password, droit_creation, droit_modification, droit_effacement, droit_administration)
+        VALUES (?, ?, 1, 1, 1, 1)
+    `).run('admin', hash);
+    console.log('Compte admin créé sur Railway');
+}
+
 module.exports = db;
