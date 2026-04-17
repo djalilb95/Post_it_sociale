@@ -1,6 +1,7 @@
 {
   "name": "postit-social",
   "version": "1.0.0",
+  "main": "app.js",
   "engines": {
     "node": "20.x"
   },
