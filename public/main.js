@@ -347,3 +347,80 @@ document.addEventListener('mouseup', async (e) => {
     console.error('Erreur lors du déplacement', err);
   }
 });
+
+function toggleReglages() {
+  const panel = document.getElementById('panel-reglages');
+  const overlay = document.getElementById('overlay-reglages');
+  if (panel && overlay) {
+    panel.classList.toggle('hidden');
+    overlay.classList.toggle('hidden');
+  }
+}
+
+async function changerLogin() {
+  const nouveauLogin = document.getElementById('nouveau-login').value.trim();
+  const feedback = document.getElementById('feedback-login');
+  try {
+    const res = await fetch('/settings/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nouveauLogin })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      feedback.textContent = data.erreur;
+      feedback.className = 'feedback erreur';
+    } else {
+      document.getElementById('span-login').textContent = data.nouveauLogin;
+      feedback.textContent = 'Login modifié !';
+      feedback.className = 'feedback succes';
+    }
+  } catch (err) { feedback.textContent = 'Erreur'; }
+}
+
+async function changerPassword() {
+  const ancienPassword = document.getElementById('ancien-password').value;
+  const nouveauPassword = document.getElementById('nouveau-password').value;
+  const feedback = document.getElementById('feedback-password');
+  try {
+    const res = await fetch('/settings/password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ancienPassword, nouveauPassword })
+    });
+    if (res.ok) {
+      feedback.textContent = 'Mot de passe modifié !';
+      feedback.className = 'feedback succes';
+    } else {
+      const d = await res.json();
+      feedback.textContent = d.erreur;
+      feedback.className = 'feedback erreur';
+    }
+  } catch (err) { feedback.textContent = 'Erreur'; }
+}
+
+async function sauvegarderCouleurs() {
+  const couleurFond = document.getElementById('couleur-fond').value;
+  const couleurPostit = document.getElementById('couleur-postit').value;
+  const feedback = document.getElementById('feedback-couleurs');
+  try {
+    const res = await fetch('/settings/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ couleurFond, couleurPostit })
+    });
+    if (res.ok) {
+      document.querySelector('.board').style.background = couleurFond;
+      document.querySelectorAll('.postit').forEach(p => p.style.background = couleurPostit);
+      feedback.textContent = 'Couleurs sauvegardées !';
+      feedback.className = 'feedback succes';
+    }
+  } catch (err) { feedback.textContent = 'Erreur'; }
+}
+
+// Initialisation au chargement
+document.querySelectorAll('.postit.modifiable').forEach(div => {
+  ecouterBoutonSupprimer(div);
+  ecouterDoubleClicModification(div);
+  ecouterDrag(div);
+});
