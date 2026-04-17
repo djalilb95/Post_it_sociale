@@ -109,44 +109,60 @@ async function ajouterPostit() {
  * CORRECTION SÉCURITÉ (XSS) : 
  * Utilisation de document.createElement et textContent à la place de innerHTML.
  */
+/**
+ * Affiche un post-it sur le board.
+ * Gère les droits d'affichage des contrôles (Admin / Auteur) de manière sécurisée.
+ */
 function afficherPostit(postit) {
   const tousLesPostits = document.querySelectorAll('.postit');
   const maxZIndex = Math.max(...[...tousLesPostits].map(p => parseInt(p.style.zIndex) || 0));
 
   const div = document.createElement('div');
-  div.classList.add('postit', 'modifiable'); 
   div.dataset.id = postit.id;
   div.style.left = postit.x + 'px';
   div.style.top = postit.y + 'px';
   div.style.zIndex = maxZIndex + 1;
+  div.classList.add('postit');
 
-  // Création sécurisée du paragraphe de texte
+  // VÉRIFICATION DES DROITS (Utilise l'objet window.currentUser défini dans index.ejs)
+  const estAuteur = window.currentUser && window.currentUser.id === postit.auteur_id;
+  const estAdmin = window.currentUser && window.currentUser.isAdmin;
+  const peutModifier = estAuteur || estAdmin;
+
+  if (peutModifier) {
+    div.classList.add('modifiable');
+  }
+
+  // Création sécurisée du contenu (Protection XSS)
   const pTexte = document.createElement('p');
   pTexte.classList.add('postit-texte');
-  pTexte.textContent = postit.texte; // Neutralise les balises HTML injectées
+  pTexte.textContent = postit.texte;
 
-  // Création sécurisée des meta-données (auteur et date)
   const pMeta = document.createElement('p');
   pMeta.classList.add('postit-meta');
   const dateFormatee = new Date(postit.date).toLocaleString('fr-FR');
   pMeta.textContent = `${postit.auteur} — ${dateFormatee}`;
 
-  // Création du bouton de suppression
-  const btnSuppr = document.createElement('button');
-  btnSuppr.classList.add('supprimer');
-  btnSuppr.dataset.id = postit.id;
-  btnSuppr.textContent = '×';
-
-  // Assemblage du post-it
   div.appendChild(pTexte);
   div.appendChild(pMeta);
-  div.appendChild(btnSuppr);
+
+  // AJOUT DU BOUTON SUPPRIMER SI ADMIN OU AUTEUR
+  if (peutModifier) {
+    const btnSuppr = document.createElement('button');
+    btnSuppr.classList.add('supprimer');
+    btnSuppr.dataset.id = postit.id;
+    btnSuppr.textContent = '×';
+    div.appendChild(btnSuppr);
+  }
 
   document.querySelector('.board').appendChild(div);
   
-  ecouterBoutonSupprimer(div);
-  ecouterDoubleClicModification(div);
-  ecouterDrag(div); 
+  // Activation des interactions si autorisé
+  if (peutModifier) {
+    ecouterBoutonSupprimer(div);
+    ecouterDoubleClicModification(div);
+    ecouterDrag(div); 
+  }
 }
 
 document.querySelectorAll('.supprimer').forEach(bouton => {

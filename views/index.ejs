@@ -73,12 +73,21 @@
 
   <div class="board">
     <% postits.forEach(postit => { %>
-      <div class="postit <%= (user && user.id === postit.auteur_id) ? 'modifiable' : '' %>"
-           style="left: <%= postit.x %>px; top: <%= postit.y %>px; z-index: <%= postit.zIndex %>;"
-           data-id="<%= postit.id %>">
+      <% 
+        // Calcul des droits pour ce post-it précis
+        let estAuteur = (user && user.id === postit.auteur_id);
+        let estAdmin = (user && user.droits && user.droits.administration == 1);
+        let droitGlobal = estAuteur || estAdmin;
+      %>
+      
+      <div class="postit <%= droitGlobal ? 'modifiable' : '' %>"
+          style="left: <%= postit.x %>px; top: <%= postit.y %>px; z-index: <%= postit.zIndex %>;"
+          data-id="<%= postit.id %>">
+        
         <p class="postit-texte"><%= postit.texte %></p>
         <p class="postit-meta"><%= postit.auteur %> — <%= new Date(postit.date).toLocaleString('fr-FR') %></p>
-        <% if (user && user.id === postit.auteur_id) { %>
+        
+        <% if (droitGlobal) { %>
           <button class="supprimer" data-id="<%= postit.id %>">×</button>
         <% } %>
       </div>
@@ -93,6 +102,14 @@
     </div>
   </div>
 
+  
+  <script>
+    window.currentUser = {
+      id: <%= user ? user.id : 'null' %>,
+      // On force la conversion en booléen JS
+      isAdmin: <%= (user && user.droits && user.droits.administration) ? 'true' : 'false' %>
+    };
+  </script>
   <script src="/main.js"></script>
 </body>
 </html>
