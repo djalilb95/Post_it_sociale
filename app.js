@@ -22,12 +22,29 @@ app.use((req, res, next) => {
   next();
 });
 // Connecte automatiquement les visiteurs non connectés en tant que guest
+// Connecte automatiquement les visiteurs non connectés en tant que guest
 app.use(async (req, res, next) => {
   if (!req.session.user) {
     const db = require('./database');
-    const guest = db.prepare('SELECT * FROM users WHERE login = ?').get('guest');
-    if (guest) {
-      req.session.user = { id: guest.id, login: 'guest' };
+    // ANCIENNE SYNTAXE : const guest = db.prepare('SELECT * FROM users WHERE login = ?').get('guest');
+    
+    // NOUVELLE SYNTAXE :
+    try {
+      const guest = await db.get2('SELECT * FROM users WHERE login = ?', ['guest']);
+      if (guest) {
+        req.session.user = { 
+          id: guest.id, 
+          login: 'guest',
+          droits: {
+            creation: !!guest.droit_creation,
+            modification: !!guest.droit_modification,
+            effacement: !!guest.droit_effacement,
+            administration: !!guest.droit_administration
+          }
+        };
+      }
+    } catch (err) {
+      console.error("Erreur lors de la connexion guest automatique:", err);
     }
   }
   next();
@@ -46,18 +63,19 @@ const options = {
 
 module.exports = app;
 
+// Déplace le chargement des certificats à l'intérieur du bloc conditionnel
 if (process.env.NODE_ENV !== 'production') {
-  const https = require('https');
-  const fs = require('fs');
   const options = {
     key: fs.readFileSync('key.pem'),
     cert: fs.readFileSync('cert.pem')
   };
   https.createServer(options, app).listen(3000, () => {
-    console.log('Serveur HTTPS démarré sur https://localhost:3000');
+    console.log('Serveur HTTPS local sur https://localhost:3000');
   });
 } else {
-  app.listen(process.env.PORT || 3000, () => {
-    console.log('Serveur démarré en production');
+  // En production (Railway), on utilise uniquement app.listen sur le port fourni par la plateforme
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`Serveur démarré en production sur le port ${port}`);
   });
 }
