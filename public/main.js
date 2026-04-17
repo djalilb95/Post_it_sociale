@@ -6,7 +6,7 @@ source.onmessage = (e) => {
 
   if (data.type === 'ajout') {
     const dejaPresent = document.querySelector(`.postit[data-id="${data.id}"]`);
-    if (!dejaPresent) {
+    if (!dejaPresent && data.id) {
       afficherPostit(data);
     }
   }

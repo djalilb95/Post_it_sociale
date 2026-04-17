@@ -122,6 +122,16 @@ router.post('/modifier', async (req, res) => {
 });
 
 router.post('/deplacer', async (req, res) => {
+
+  console.log("--- TENTATIVE DE DÉPLACEMENT ---");
+  console.log("Session complète :", req.session);
+  console.log("Utilisateur en session :", req.session.user);
+
+  if (!req.session.user) {
+      console.log("ERREUR : Aucun utilisateur trouvé en session !");
+      return res.status(401).json({ erreur: "Non autorisé" });
+  }
+  
   if (!req.session.user?.droits?.modification) {
     return res.status(401).json({ erreur: 'Non autorisé' });
   }

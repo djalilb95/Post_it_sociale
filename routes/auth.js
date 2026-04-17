@@ -24,14 +24,28 @@ router.post('/signup', async (req, res) => {
   }
 
   const hash = await bcrypt.hash(password, 10);
-  await db.run2(
+  
+  // 1. On récupère le résultat de l'insertion pour avoir l'ID
+  const result = await db.run2(
     'INSERT INTO users (login, password, droit_creation) VALUES (?, ?, 1)',
     [login, hash]
   );
 
+  // 2. AJOUT CRUCIAL : On connecte l'utilisateur immédiatement
+  req.session.user = {
+    id: result.lastID, // L'ID que la base de données vient de générer
+    login: login,
+    droits: {
+      creation: true,      // Il peut créer puisqu'il vient de s'inscrire
+      modification: false, // À adapter selon ton énoncé
+      effacement: false,
+      administration: false
+    }
+  };
+
+  // 3. Maintenant on peut rediriger, il sera reconnu comme connecté
   res.redirect('/');
 });
-
 router.post('/login', async (req, res) => {
   const { login, password } = req.body;
   const user = await db.get2('SELECT * FROM users WHERE login = ?', [login]);
